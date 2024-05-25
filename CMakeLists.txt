@@ -34,3 +34,11 @@ target_link_libraries(
     main
         bloomstore
 )
+
+# -- Test stuff implemented here
+add_executable(bloom_filter_test test/bloom_filter_test.cc)
+target_link_libraries(
+    bloom_filter_test
+        bloomstore
+        gtest_main
+)
