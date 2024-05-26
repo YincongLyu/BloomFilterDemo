@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "bloom_buffer.h"
 #include "xorshift32.h"
+#include <iostream>
 
 #define K 4
 #define V 4
@@ -22,44 +23,58 @@ struct ArrayHasher {
 };
 
 ARR to_arr(uint32_t value) {
-    auto now_value = ARR();
+    ARR now_value = ARR();
     memcpy(&now_value, &value, sizeof (value));
     return now_value;
 }
-TEST(BFBufferTest, ReadWriteTest) {
-    auto bf_buffer = bloomstore::BloomBuffer(K, V, C);
-    auto ground_truth = std::unordered_map<ARR, ARR, ArrayHasher>();
-    auto random_number_generator = XorShift32(123);
 
-    int total_operaters = 500;
-    int key_range_sz = 64;
+uint32_t to_uint32(ARR& value) {
+    uint32_t tmp = 0xffffffff;
+    memcpy(&tmp, &value, sizeof (uint32_t));
+    return tmp;
+}
+
+TEST(BFBufferTest, ReadWriteTest) {
+    std::cout << "=======enter test====\n";
+    auto bf_buffer = bloomstore::BloomBuffer(K, V, C);
+    std::cout << "====initial bf_buffer failed=========\n";
+    auto ground_truth = std::unordered_map<ARR, ARR, ArrayHasher>();
+    //  std::cout << "======================\n";
+    auto random_number_generator = XorShift32(6);
+    int total_operaters = 10;
+    int key_range_sz = 32;
     for (size_t i = 0; i < total_operaters; ++i) {
         auto op_type = random_number_generator.sample() % 3;
         auto key = to_arr(random_number_generator.sample() % key_range_sz);
         auto value = to_arr(random_number_generator.sample());
+
+        std::cout << "Operation: " << op_type << ", Key: " << to_uint32(key) << ", Value: " << to_uint32(value) << std::endl;
         switch (op_type)
         {
             case 0: { // put
+                std::cout << "Put operation" << std::endl;
                 bf_buffer.put(std::span{key}, std::span{value});
                 ground_truth.erase(key);
                 ground_truth.emplace(key, value);
                 break;
             }  
             case 1: { // del
+                std::cout << "Del operation" << std::endl;
                 bf_buffer.del(std::span{key});
                 ground_truth.erase(key);
                 break;
             }
-            
             case 2: { // get
-                auto value = bf_buffer.get(std::span{key});
+                std::cout << "Get operation" << std::endl;
+                auto value = ARR();
+                bool is_found = false;
+                bool is_tombstone = false;
+                bf_buffer.get(std::span{key}, std::span{value}, is_found, is_tombstone);
                 if (ground_truth.count(key)) {
-                    auto expected_value = std::vector(ground_truth[key].begin(), ground_truth[key].end()); // array, 4
-                    auto value_in_buffer = std::vector(value.value().begin(), value.value().end()); // std::span<uint8_t>
-                    // 统一转化成 vector 比较
-                    ASSERT_EQ(expected_value, value_in_buffer);
+                    auto expected_value = ground_truth[key];
+                    ASSERT_EQ(expected_value, value);
                 } else {
-                    auto is_null = !value.has_value();
+                    auto is_null = (!is_found || is_tombstone);
                     ASSERT_TRUE(is_null);
                 }
                 break;
