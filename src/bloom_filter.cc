@@ -69,10 +69,13 @@ void ChainIterator::next(size_t& addr, bool& is_depleted) {
 }
 
 BloomFilterChain::BloomFilterChain(uint32_t slot_num, uint8_t nfunc, size_t align) : 
-    space(0),
+    space((nslots + sizeof(size_t) * 8 + (align - 1) / 8) / (align / 8) * (align / 8), 0),
     chain_len_(0),
     nfunc_(nfunc)
-{}
+{
+    this->matrix_ = std::span{&this->space_[0], slot_num_};
+    this->block_addr_ = std::span{&this->space_[slot_num_], 64};
+}
 /**
  * @brief enabled batch operate
  * 

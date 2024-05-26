@@ -6,6 +6,20 @@
 
 namespace bloomstore
 {
+class BitSpan;
+class BloomBuffer;
+
+class BitSpan {
+public:
+    BitSpan() = default;
+    BitSpan(std::span<uint8_t> space);
+    const bool get(size_t i);
+    void set(size_t i, bool v);
+    
+private:
+    std::span<uint8_t> space_;
+ 
+};   
 
 class BloomBuffer {
 public:
@@ -18,8 +32,9 @@ public:
     void get(std::span<uint8_t> key, std::span<uint8_t> value, bool& is_found, bool& is_tombstone);
 
 private:
-    std::vector<bool> tombstone_;
-    std::vector<uint8_t> kvPairs_; /*连续的一段内存空间，是一个字节数组，需严格按 byte 寻址*/
+    std::vector<uint8_t> space_;
+    BitSpan              tombstone_;
+    std::span<uint8_t> kvPairs_; /*连续的一段内存空间，是一个字节数组，需严格按 byte 寻址*/
     
     size_t key_sz_;
     size_t value_sz_;
