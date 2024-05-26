@@ -49,3 +49,9 @@ target_link_libraries(
 #         bloomstore
 #         gtest_main
 # )
+add_executable(persist_test test/persist_test.cc)
+target_link_libraries(
+    persist_test
+        bloomstore
+        gtest_main
+)
