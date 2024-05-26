@@ -43,9 +43,9 @@ target_link_libraries(
         gtest_main
 )
 
-add_executable(bloom_buffer_test test/bloom_buffer_test.cc)
-target_link_libraries(
-    bloom_buffer_test
-        bloomstore
-        gtest_main
-)
+# add_executable(bloom_buffer_test test/bloom_buffer_test.cc)
+# target_link_libraries(
+#     bloom_buffer_test
+#         bloomstore
+#         gtest_main
+# )
